@@ -1,0 +1,21 @@
+<!-- filepath: c:\Users\Asus\Downloads\django-courses-master\templates\teachers\teachers_list.html -->
+{% extends 'base.html' %}
+{% block title %}Teachers{% endblock %}
+{% block content %}
+<h2>Our Teachers</h2>
+<div class="row">
+  {% for teacher in teachers %}
+    <div class="col-md-4">
+      <div class="card mb-4">
+        {% if teacher.photo %}
+          <img src="{{ teacher.photo.url }}" class="card-img-top" alt="{{ teacher.name }}">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ teacher.name }}</h5>
+          <p class="card-text">{{ teacher.bio }}</p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
