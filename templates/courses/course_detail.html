@@ -39,44 +39,93 @@
         
 
         <div class="list-group">
-            {% if lectures %}
-                <h3 class="my-5">All Lectures</h3>
-
-                {% for lecture in lectures %}
-                    {% comment %} <a href="#" class="list-group-item list-group-item-action {% if lecture.lecture_previewable == "No" %}disabled{% endif %}">
-                        {{ lecture.lecture_title }}  {% if lecture.lecture_previewable == "Yes" %}<small class="text-muted">[ Watch Preview ]</small>{% endif %}
-                    </a> {% endcomment %}
-
-                    <!-- Button trigger modal -->
-                    <button type="button" class="list-group-item list-group-item-action {% if lecture.lecture_previewable == "No" %}disabled{% endif %}" data-bs-toggle="modal" data-bs-target="#Modal{{ lecture.id }}">
-                        {{ lecture.lecture_title }}  {% if lecture.lecture_previewable == "Yes" %}<small class="text-muted">[ Watch Preview ]</small>{% endif %}
-                    </button>
-
-                      {% if lecture.lecture_video and lecture.lecture_previewable == "Yes" %}
-                      <!-- Modal -->
-                      <div class="modal fade" id="Modal{{lecture.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <p class="modal-title fs-5 text-center" id="exampleModalLabel"><strong>Preview:</strong> {{ lecture.lecture_title }}</p>
-                              <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Close"> x </button>
+    {% for module in modules %}
+        <!-- Modul nomi (bosilganda ochiladi) -->
+        <button class="list-group-item list-group-item-action"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#module{{ module.id }}">
+            {{ module.module_title }}
+        </button>
+        <!-- Modulga tegishli darslar (faqat modul bosilganda ochiladi) -->
+        <div class="collapse" id="module{{ module.id }}">
+            <div class="card card-body">
+                <p>{{ module.module_description }}</p>
+                {% for lecture in module.lectures.all %}
+                    <div class="mb-2">
+                        <strong>{{ lecture.lecture_title }}</strong>
+                        {% if lecture.lecture_previewable == "Yes" %}
+                            <!-- Button trigger modal -->
+                            <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#Modal{{ lecture.id }}">
+                                [ Watch Preview ]
+                            </button>
+                        {% endif %}
+                        {% if lecture.lecture_video and lecture.lecture_previewable == "Yes" %}
+                        <!-- Modal -->
+                        <div class="modal fade" id="Modal{{lecture.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <p class="modal-title fs-5 text-center" id="exampleModalLabel"><strong>Preview:</strong> {{ lecture.lecture_title }}</p>
+                                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Close"> x </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <iframe width="100%" height="350" src="https://www.youtube.com/embed/{{ lecture.lecture_video }}" title="{{ lecture.lecture_title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="modal-body">
-                              <iframe width="100%" height="350" src="https://www.youtube.com/embed/{{ lecture.lecture_video }}" title="{{ lecture.lecture_title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                          </div>
                         </div>
-                      </div>
-                      {% endif %}
+                        {% endif %}
+                        <p>{{ lecture.lecture_description }}</p>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No lectures in this module.</p>
                 {% endfor %}
-
-            {% endif %}
+            </div>
         </div>
+    {% empty %}
+        <p class="text-muted">No modules for this course.</p>
+    {% endfor %}
+</div>
+    {% comment %} {% for module in modules %}
+        <h3 class="my-4">{{ module.module_title }}</h3>
+        <p>{{ module.module_description }}</p>
+        {% for lecture in module.lectures.all %}
+            <!-- Button trigger modal -->
+            <button type="button" class="list-group-item list-group-item-action {% if lecture.lecture_previewable == "No" %}disabled{% endif %}" data-bs-toggle="modal" data-bs-target="#Modal{{ lecture.id }}">
+                {{ lecture.lecture_title }}  {% if lecture.lecture_previewable == "Yes" %}<small class="text-muted">[ Watch Preview ]</small>{% endif %}
+            </button>
 
+            {% if lecture.lecture_video and lecture.lecture_previewable == "Yes" %}
+            <!-- Modal -->
+            <div class="modal fade" id="Modal{{lecture.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <p class="modal-title fs-5 text-center" id="exampleModalLabel"><strong>Preview:</strong> {{ lecture.lecture_title }}</p>
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Close"> x </button>
+                        </div>
+                        <div class="modal-body">
+                            <iframe width="100%" height="350" src="https://www.youtube.com/embed/{{ lecture.lecture_video }}" title="{{ lecture.lecture_title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% empty %}
+            <p class="text-muted">No lectures in this module.</p>
+        {% endfor %}
+    {% empty %}
+        <p class="text-muted">No modules for this course.</p>
+    {% endfor %}
+</div>
       
     </div>
-  </div>
+  </div> {% endcomment %}
 {% endblock content %}

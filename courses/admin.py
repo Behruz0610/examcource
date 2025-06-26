@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Topic, Course, Lecture, Enroll
+from .models import Topic, Course, Enroll
 
 # Register your models here.
 class TopicAdmin(admin.ModelAdmin):
@@ -38,6 +38,6 @@ class EnrollAdmin(admin.ModelAdmin):
 
 admin.site.register(Topic, TopicAdmin)
 admin.site.register(Course, CourseAdmin)
-admin.site.register(Lecture, LectureAdmin)
+# admin.site.register(Lecture, LectureAdmin)
 admin.site.register(Enroll, EnrollAdmin)
 

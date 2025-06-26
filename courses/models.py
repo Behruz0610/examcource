@@ -65,29 +65,29 @@ class Course(models.Model):
         return self.course_title
 
 
-class Lecture(models.Model):
-    lecture_title = models.CharField(max_length=255, verbose_name="Lecture Title")
-    lecture_slug = models.SlugField(verbose_name="Lecture Slug")
-    lecture_description = models.TextField(blank=True, null=True, verbose_name="Lecture Description")
-    course = models.ForeignKey(Course, verbose_name="Course", on_delete=models.CASCADE)
-    lecture_file = models.FileField(upload_to="files/", blank=True, null=True)
-    lecture_video = models.CharField(max_length=150, blank=True, null=True, verbose_name="Video ID")
-    lecture_previewable = models.CharField(
-        choices = IS_ACTIVE,
-        default = 'Yes',
-        max_length=50,
-        verbose_name="Is Previewable?"
-        )
-    lecture_created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created Date")
-    lecture_updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated Date")
+# class Lecture(models.Model):
+#     lecture_title = models.CharField(max_length=255, verbose_name="Lecture Title")
+#     lecture_slug = models.SlugField(verbose_name="Lecture Slug")
+#     lecture_description = models.TextField(blank=True, null=True, verbose_name="Lecture Description")
+#     course = models.ForeignKey(Course, verbose_name="Course", on_delete=models.CASCADE)
+#     lecture_file = models.FileField(upload_to="files/", blank=True, null=True)
+#     lecture_video = models.CharField(max_length=150, blank=True, null=True, verbose_name="Video ID")
+#     lecture_previewable = models.CharField(
+#         choices = IS_ACTIVE,
+#         default = 'Yes',
+#         max_length=50,
+#         verbose_name="Is Previewable?"
+#         )
+#     lecture_created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created Date")
+#     lecture_updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated Date")
 
-    # Meta SEO
-    seo_lecture_title = models.CharField(max_length=60, blank=True, null=True, verbose_name="SEO Lecture Title (60 Characters Long)")
-    seo_lecture_keyword = models.TextField(blank=True, null=True, verbose_name="SEO Lecture Keywords, Separated by Comma")
-    seo_lecture_description = models.TextField(blank=True, null=True, verbose_name="SEO Lecture Description (160 Characters Long)")
+    # # Meta SEO
+    # seo_lecture_title = models.CharField(max_length=60, blank=True, null=True, verbose_name="SEO Lecture Title (60 Characters Long)")
+    # seo_lecture_keyword = models.TextField(blank=True, null=True, verbose_name="SEO Lecture Keywords, Separated by Comma")
+    # seo_lecture_description = models.TextField(blank=True, null=True, verbose_name="SEO Lecture Description (160 Characters Long)")
 
-    def __str__(self):
-        return self.lecture_title
+    # def __str__(self):
+    #     return self.lecture_title
 
 
 class Enroll(models.Model):

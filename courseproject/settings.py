@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
 
     'courses',
+    'modules',
     'core',
     'teachers',
     'allauth',
@@ -193,3 +194,6 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
     }
 }
+
+# settings.py
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

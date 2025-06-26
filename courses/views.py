@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Topic, Course, Lecture, Enroll
+from .models import Topic, Course, Enroll
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required # for Access Control
 
@@ -44,22 +44,19 @@ def search_courses(request):
         }
         return render(request, 'courses/search_courses.html', context)
 
-
 def course_detail(request, course_slug):
     try:
         course = Course.objects.get(course_slug=course_slug)
-        lectures = Lecture.objects.filter(course=course.id)
+        modules = course.modules.all()  # Endi modullarni olamiz
 
-        # Check
         if request.user.is_authenticated:
             enrolled = Enroll.objects.filter(course=course, user=request.user)
         else:
             enrolled = None
-        
 
         context = {
             'course': course,
-            'lectures': lectures,
+            'modules': modules,  # lectures emas, modules!
             'enrolled': enrolled,
         }
         return render(request, 'courses/course_detail.html', context)
@@ -68,28 +65,24 @@ def course_detail(request, course_slug):
         messages.error(request, "Course Does not Exist.")
         return redirect(index)
 
-
 @login_required(login_url='account_login')
 def lecture(request, course_slug):
     try:
         course = Course.objects.get(course_slug=course_slug)
-        lectures = Lecture.objects.filter(course=course.id)
-        first_lecture = Lecture.objects.filter(course=course.id)[:1]
-        #Check User Enrolled
+        modules = course.modules.all()
+        first_module = modules.first()
+        first_lecture = first_module.lectures.first() if first_module else None
         enrolled = Enroll.objects.filter(course=course, user=request.user)
 
         context = {
             'course': course,
-            'lectures': lectures,
+            'modules': modules,
             'first_lecture': first_lecture,
             'enrolled': enrolled,
         }
-        # return render(request, 'courses/lecture.html', context)
-        #Check User Enrolled
         if enrolled:
             return render(request, 'courses/lecture.html', context)
         else:
-            #User Logged In but Not Enrolled
             messages.error(request, "Enroll Now to access this course.")
             return render(request, 'courses/course_detail.html', context)
 
@@ -102,23 +95,19 @@ def lecture(request, course_slug):
 def lecture_selected(request, course_slug, lecture_slug):
     try:
         course = Course.objects.get(course_slug=course_slug)
-        lectures = Lecture.objects.filter(course=course.id)
-        lecture_selected = Lecture.objects.get(lecture_slug=lecture_slug)
-        #Check User Enrolled
+        modules = course.modules.all()
+        lecture_selected = Lecture.objects.get(lecture_slug=lecture_slug, module__course=course)
         enrolled = Enroll.objects.filter(course=course, user=request.user)
 
         context = {
             'course': course,
-            'lectures': lectures,
+            'modules': modules,
             'lecture_selected': lecture_selected,
             'enrolled': enrolled,
         }
-        # return render(request, 'courses/lecture_selected.html', context)
-        #Check User Enrolled
         if enrolled:
             return render(request, 'courses/lecture_selected.html', context)
         else:
-            #User Logged In but Not Enrolled
             messages.error(request, "Enroll Now to access this course.")
             return render(request, 'courses/course_detail.html', context)
 
