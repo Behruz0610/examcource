@@ -99,8 +99,17 @@ class Enroll(models.Model):
         return self.course.course_title
     
     
-    
-    
+# ...existing code...
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Category Name")
+    slug = models.SlugField(unique=True, verbose_name="Category Slug")
+    description = models.TextField(blank=True, null=True, verbose_name="Description")
+
+    def __str__(self):
+        return self.name
+
+
     
 
 

@@ -2,6 +2,10 @@ from django.shortcuts import render, redirect
 from .models import Topic, Course, Enroll
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required # for Access Control
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Course
+from .serializers import CourseSerializer
 
 
 
@@ -146,5 +150,22 @@ def enrolled_courses(request):
         return redirect(index)
     
 
-        
+from rest_framework import viewsets
+from .models import Course, Category
+from .serializers import CourseSerializer, CategorySerializer
+
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+@api_view(['GET'])
+def course_list_api(request):
+    courses = Course.objects.all()
+    serializer = CourseSerializer(courses, many=True)
+    return Response(serializer.data)
 
