@@ -6,6 +6,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Course
 from .serializers import CourseSerializer
+from rest_framework.generics import ListAPIView,ListCreateAPIView,RetrieveUpdateDestroyAPIView
+
 
 
 
@@ -169,3 +171,20 @@ def course_list_api(request):
     serializer = CourseSerializer(courses, many=True)
     return Response(serializer.data)
 
+
+class CourseListCreateAPIView(ListCreateAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+    def get_queryset(self):
+        queryset = Course.objects.all()
+        return queryset
+    
+
+
+
+class CourseDetailAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+    lookup_url_kwarg= 'course_slug'
