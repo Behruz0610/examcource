@@ -7,7 +7,13 @@ from rest_framework.response import Response
 from .models import Course
 from .serializers import CourseSerializer
 from rest_framework.generics import ListAPIView,ListCreateAPIView,RetrieveUpdateDestroyAPIView
-
+from .models import Subject,Course
+from .serializers import SubjectModelSerializers,CourseModelSerializers
+from rest_framework.generics import ListAPIView,ListCreateAPIView,RetrieveUpdateDestroyAPIView
+from rest_framework import viewsets
+from .models import Course, Category
+from .serializers import CourseSerializer, CategorySerializer
+from .permissions import IsAdminForPremiumCourse
 
 
 
@@ -152,9 +158,27 @@ def enrolled_courses(request):
         return redirect(index)
     
 
-from rest_framework import viewsets
-from .models import Course, Category
-from .serializers import CourseSerializer, CategorySerializer
+
+
+
+class SubjectListCreateAPIView(ListCreateAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectModelSerializers
+    
+    def get_queryset(self):
+        queryset = Subject.objects.all()
+        queryset = queryset.annotate(course_count=Count('courses'))
+        queryset = queryset.order_by('course_count')
+        return queryset
+    
+    
+class SubjectDetailAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectModelSerializers
+    # lookup_field = 'subject_id'
+    lookup_url_kwarg = 'subject_id'
+
+
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -163,6 +187,20 @@ class CourseViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminForPremiumCourse]
+
+
+# from rest_framework import viewsets
+# from .models import Course, Category
+# from .serializers import CourseSerializer, CategorySerializer
+
+# class CourseViewSet(viewsets.ModelViewSet):
+#     queryset = Course.objects.all()
+#     serializer_class = CourseSerializer
+
+# class CategoryViewSet(viewsets.ModelViewSet):
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
 
 
 @api_view(['GET'])
@@ -172,19 +210,37 @@ def course_list_api(request):
     return Response(serializer.data)
 
 
-class CourseListCreateAPIView(ListCreateAPIView):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+# class CourseListCreateAPIView(ListCreateAPIView):
+#     queryset = Course.objects.all()
+#     serializer_class = CourseSerializer
 
-    def get_queryset(self):
-        queryset = Course.objects.all()
-        return queryset
+#     def get_queryset(self):
+#         queryset = Course.objects.all()
+#         return queryset
     
 
 
 
-class CourseDetailAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+# class CourseDetailAPIView(RetrieveUpdateDestroyAPIView):
+#     queryset = Course.objects.all()
+#     serializer_class = CourseSerializer
 
-    lookup_url_kwarg= 'course_slug'
+#     lookup_url_kwarg= 'course_slug'
+
+
+
+# from .permissions import IsAdminOrManager
+
+# class CourseListView(ListAPIView):
+#     queryset = Course.objects.all()
+#     serializer_class = CourseSerializer
+#     permission_classes = [IsAdminOrManager]
+
+
+from .permissions import IsAdminForPremiumCourse, IsEvenYear, IsSuperUser, PutPatchOnly
+
+# Misol uchun:
+class PremiumCourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.filter(is_premium=True)
+    serializer_class = CourseSerializer
+    permission_classes = [IsAdminForPremiumCourse]

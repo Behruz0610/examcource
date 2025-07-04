@@ -15,6 +15,9 @@ urlpatterns = [
     path('', include('courses.urls')),
     path('', include('core.urls')),
     path('teachers/', include('teachers.urls')),
+    path('admin/', admin.site.urls),
+    path('', include('courses.urls')),
+    path('api-auth/', include('rest_framework.urls')),  # DRF login/logout uchun
 
 ]
 # To Display Images while onlocal server

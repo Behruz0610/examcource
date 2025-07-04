@@ -38,6 +38,8 @@ class Course(models.Model):
     course_description = models.TextField(blank=True, null=True, verbose_name="Course Description")
     course_topic = models.ManyToManyField(Topic, verbose_name="Course Topic")
     course_image = models.ImageField(upload_to="courses/", blank=True, null=True)
+    is_premium = models.BooleanField(default=False, verbose_name="Is Premium?")
+
     course_is_active = models.CharField(
         choices = IS_ACTIVE,
         default = 'Yes',
@@ -52,6 +54,7 @@ class Course(models.Model):
         )
     course_created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created Date")
     course_updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated Date")
+
 
     # Meta for SEO
     seo_course_title = models.CharField(max_length=60, blank=True, null=True, verbose_name="SEO Course Title (60 Characters Long)")
@@ -113,4 +116,13 @@ class Category(models.Model):
     
 
 
+class Subject(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Subject Name")
+    slug = models.SlugField(unique=True, verbose_name="Subject Slug")
+    description = models.TextField(blank=True, null=True, verbose_name="Description")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created Date")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated Date")
+
+    def __str__(self):
+        return self.name
 

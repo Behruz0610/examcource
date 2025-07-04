@@ -20,8 +20,8 @@ urlpatterns = [
     path('course/<slug:course_slug>/lecture/<slug:lecture_slug>/', views.lecture_selected, name="lecture-selected"),
 
     path('course/enroll/<int:course_id>/', views.enroll, name="enroll"),
-    path('course/api/courses/', views.course_list_api, name="course-list-api"),
     path('api/', include(router.urls)),  # <-- REST API endpointlari uchun
+    
 
     
 ]
