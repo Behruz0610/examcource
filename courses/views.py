@@ -14,6 +14,13 @@ from rest_framework import viewsets
 from .models import Course, Category
 from .serializers import CourseSerializer, CategorySerializer
 from .permissions import IsAdminForPremiumCourse
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 
 
@@ -244,3 +251,35 @@ class PremiumCourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.filter(is_premium=True)
     serializer_class = CourseSerializer
     permission_classes = [IsAdminForPremiumCourse]
+
+
+from .permissions import PutPatchOnly
+
+class CourseUpdateView(APIView):
+    permission_classes = [PutPatchOnly]
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['username'] = self.user.username
+        # qo‘shimcha ma’lumotlar qo‘shish mumkin
+        return data
+
+class CustomObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except KeyError:
+            return Response({"error": "refresh token kerak"}, status=400)
+        except TokenError:
+            return Response({"error": "Notogri token"}, status=400)

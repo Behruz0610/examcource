@@ -2,6 +2,10 @@ from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
 from .views import CourseViewSet, CategoryViewSet
+from django.urls import path
+from .views import CustomObtainPairView, LogoutView
+from rest_framework_simplejwt.views import TokenRefreshView
+
 
 router = DefaultRouter()
 router.register(r'courses', CourseViewSet)
@@ -21,6 +25,9 @@ urlpatterns = [
 
     path('course/enroll/<int:course_id>/', views.enroll, name="enroll"),
     path('api/', include(router.urls)),  # <-- REST API endpointlari uchun
+    path('api/token/', CustomObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/logout/', LogoutView.as_view(), name='logout'),
     
 
     
