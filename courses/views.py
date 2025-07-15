@@ -1,49 +1,46 @@
 from django.shortcuts import render, redirect
 from .models import Topic, Course, Enroll
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required # for Access Control
+from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Course
-from .serializers import CourseSerializer
-from rest_framework.generics import ListAPIView,ListCreateAPIView,RetrieveUpdateDestroyAPIView
-from .models import Subject,Course
-from .serializers import SubjectModelSerializers,CourseModelSerializers
-from rest_framework.generics import ListAPIView,ListCreateAPIView,RetrieveUpdateDestroyAPIView
-from rest_framework import viewsets
-from .models import Course, Category
-from .serializers import CourseSerializer, CategorySerializer
-from .permissions import IsAdminForPremiumCourse
+from .serializers import CourseSerializer, SubjectModelSerializers, CourseModelSerializers, CategorySerializer
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework import viewsets, status, permissions
+from .models import Subject, Category
+from .permissions import IsAdminForPremiumCourse, PutPatchOnly
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.core.cache import cache
+from django.db.models import Count
 
 
-
-
+@cache_page(60 * 2)
 def index(request):
-    courses = Course.objects.filter(course_is_active='Yes', course_is_featured="Yes")
+    courses = Course.objects.filter(course_is_active='Yes', course_is_featured="Yes").prefetch_related('course_topic')
     context = {
         'courses': courses,
     }
     return render(request, 'courses/index.html', context)
 
 
+@cache_page(60 * 2)
 def courses(request):
-    courses = Course.objects.filter(course_is_active='Yes')
+    courses = Course.objects.filter(course_is_active='Yes').prefetch_related('course_topic')
     context = {
         'courses': courses,
     }
     return render(request, 'courses/courses.html', context)
 
 
+@cache_page(60 * 2)
 def topic_courses(request, topic_slug):
     topic = Topic.objects.get(topic_slug=topic_slug)
-    courses = Course.objects.filter(course_is_active='Yes', course_topic=topic)
+    courses = Course.objects.filter(course_is_active='Yes', course_topic=topic).prefetch_related('course_topic')
     context = {
         'courses': courses,
         'topic': topic,
@@ -56,33 +53,36 @@ def search_courses(request):
         keyword = request.GET.get('q')
         courses = Course.objects.filter(course_is_active='Yes')
         searched_courses = courses.filter(course_title__icontains=keyword) | courses.filter(course_description__icontains=keyword)
-        
         context = {
             'courses': searched_courses,
             'keyword': keyword,
         }
         return render(request, 'courses/search_courses.html', context)
 
-def course_detail(request, course_slug):
-    try:
-        course = Course.objects.get(course_slug=course_slug)
-        modules = course.modules.all()  # Endi modullarni olamiz
 
-        if request.user.is_authenticated:
-            enrolled = Enroll.objects.filter(course=course, user=request.user)
-        else:
-            enrolled = None
+def course_detail(request, course_slug):
+    cache_key = f'course_detail_{course_slug}'
+    cached_context = cache.get(cache_key)
+    if cached_context:
+        return render(request, 'courses/course_detail.html', cached_context)
+
+    try:
+        course = Course.objects.prefetch_related('modules__lectures', 'course_topic').get(course_slug=course_slug)
+
+        enrolled = Enroll.objects.filter(course=course, user=request.user) if request.user.is_authenticated else None
 
         context = {
             'course': course,
-            'modules': modules,  # lectures emas, modules!
+            'modules': course.modules.all(),
             'enrolled': enrolled,
         }
+        cache.set(cache_key, context, timeout=120)
         return render(request, 'courses/course_detail.html', context)
 
-    except:
+    except Course.DoesNotExist:
         messages.error(request, "Course Does not Exist.")
         return redirect(index)
+
 
 @login_required(login_url='account_login')
 def lecture(request, course_slug):
@@ -152,7 +152,6 @@ def enroll(request, course_id):
 
 @login_required(login_url='account_login')
 def enrolled_courses(request):
-
     try:
         courses = Enroll.objects.filter(user=request.user)
         context = {
@@ -163,33 +162,27 @@ def enrolled_courses(request):
     except:
         messages.error(request, "Couldn't Enroll to the course. Please try again later.")
         return redirect(index)
-    
 
 
-
-
+@method_decorator(cache_page(60), name='dispatch')
 class SubjectListCreateAPIView(ListCreateAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectModelSerializers
-    
+
     def get_queryset(self):
-        queryset = Subject.objects.all()
-        queryset = queryset.annotate(course_count=Count('courses'))
-        queryset = queryset.order_by('course_count')
-        return queryset
-    
-    
+        return Subject.objects.annotate(course_count=Count('courses')).order_by('course_count')
+
+
 class SubjectDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectModelSerializers
-    # lookup_field = 'subject_id'
     lookup_url_kwarg = 'subject_id'
-
 
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -197,63 +190,19 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminForPremiumCourse]
 
 
-# from rest_framework import viewsets
-# from .models import Course, Category
-# from .serializers import CourseSerializer, CategorySerializer
-
-# class CourseViewSet(viewsets.ModelViewSet):
-#     queryset = Course.objects.all()
-#     serializer_class = CourseSerializer
-
-# class CategoryViewSet(viewsets.ModelViewSet):
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-
-
 @api_view(['GET'])
+@cache_page(60)
 def course_list_api(request):
-    courses = Course.objects.all()
+    courses = Course.objects.all().prefetch_related('course_topic')
     serializer = CourseSerializer(courses, many=True)
     return Response(serializer.data)
 
 
-# class CourseListCreateAPIView(ListCreateAPIView):
-#     queryset = Course.objects.all()
-#     serializer_class = CourseSerializer
-
-#     def get_queryset(self):
-#         queryset = Course.objects.all()
-#         return queryset
-    
-
-
-
-# class CourseDetailAPIView(RetrieveUpdateDestroyAPIView):
-#     queryset = Course.objects.all()
-#     serializer_class = CourseSerializer
-
-#     lookup_url_kwarg= 'course_slug'
-
-
-
-# from .permissions import IsAdminOrManager
-
-# class CourseListView(ListAPIView):
-#     queryset = Course.objects.all()
-#     serializer_class = CourseSerializer
-#     permission_classes = [IsAdminOrManager]
-
-
-from .permissions import IsAdminForPremiumCourse, IsEvenYear, IsSuperUser, PutPatchOnly
-
-# Misol uchun:
 class PremiumCourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.filter(is_premium=True)
     serializer_class = CourseSerializer
     permission_classes = [IsAdminForPremiumCourse]
 
-
-from .permissions import PutPatchOnly
 
 class CourseUpdateView(APIView):
     permission_classes = [PutPatchOnly]
@@ -263,8 +212,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         data['username'] = self.user.username
-        # qo‘shimcha ma’lumotlar qo‘shish mumkin
         return data
+
 
 class CustomObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
